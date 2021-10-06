@@ -1,0 +1,28 @@
+{
+    "useTabs": false,
+    "tabWidth": 4,
+    "singleQuote": true,
+    "trailingComma": "none",
+    "printWidth": 150,
+    "svelteSortOrder": "options-scripts-styles-markup",
+    "svelteStrictMode": false,
+    "svelteBracketNewLine": false,
+    "svelteAllowShorthand": true,
+    "svelteIndentScriptAndStyle": false,
+    "overrides": [
+        {
+            "files": "*.svelte",
+            "options": {
+                "useTabs": false,
+                "tabWidth": 2
+            }
+        },
+        {
+            "files": ["*.yaml", "*.yml"],
+            "options": {
+                "useTabs": false,
+                "tabWidth": 2
+            }
+        }
+    ]
+}

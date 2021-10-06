@@ -1,0 +1,6 @@
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='number'] {
+    @apply focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm bg-gray-900;
+}
