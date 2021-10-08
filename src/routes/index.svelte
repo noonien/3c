@@ -187,7 +187,7 @@ $: {
 let last_coin = '';
 $: {
   if ($coin != last_coin) {
-    last_coin = coin;
+    last_coin = $coin;
     entry_price = prices?.find((c) => c.symbol == $coin)?.price || 1;
   }
 }
@@ -389,6 +389,10 @@ input[type='number'] {
     <br />
     Drop from last SO: {-round(100 - (liquidated_at / entry_price) * 100 + last.price_dev)}%
     <br />
+    <br />
+    Min Required Change:: {round(min_req_change)}%
+    <br />
+    Max Required Change:: {round(max_req_change)}%
   </div>
 </div>
 
