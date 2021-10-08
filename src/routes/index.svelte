@@ -16,7 +16,6 @@ export async function load({ fetch }) {
 import { writable } from 'svelte-local-storage-store';
 
 export let prices;
-export let brackets;
 
 let currency = 'USDT';
 let entry_price = 1;
@@ -40,9 +39,58 @@ const leverage = writable('3c.leverage', 20);
 const long = writable('3c.long', true);
 const reverse = writable('3c.reverse', true);
 
+
+let rules;
+cached('3c.rules-cache', 24 * 60 * 60, () => {
+  return fetch('https://cors.bridged.cc/https://www.binance.com/en/futures/trading-rules')
+    .then((r) => r.text())
+    .then((body) => {
+      const doc = document.createElement('html');
+      doc.innerHTML = body;
+      const rows = doc.querySelectorAll('tr.rc-table-row'); //:nth-child(1) > td:nth-child(2)
+      return Array.from(rows).map((r) => {
+        const [symbol, type] = r.children[0].innerText.split(' ');
+        const [min_trade, coin] = r.children[1].innerText.split(' ');
+
+        if (type != 'Perpetual') return;
+
+        return { symbol, type, min_trade: +min_trade, coin };
+      });
+    });
+}).then((r) => {
+  rules = r;
+});
+
+$: min_buy = rules?.find((r) => r.symbol == $coin)?.min_trade || 1;
+
+let brackets;
+cached('3c.brackets-cache', 24 * 60 * 60, () => {
+  return fetch(`https://cors.bridged.cc/https://www.binance.com/bapi/futures/v1/friendly/future/common/brackets`, {
+    headers: {
+      'content-type': 'application/json'
+    },
+    body: '{}',
+    method: 'POST'
+  }).then((r) => r.json());
+}).then((b) => {
+  brackets = b.data.brackets.map((b) => ({
+    symbol: b.symbol,
+    brackets: b.riskBrackets.map((rb) => ({
+      volume_cap: rb.bracketNotionalCap,
+      minLeverage: rb.minOpenPosLeverage,
+      maxLeverage: rb.maxOpenPosLeverage
+    }))
+  }));
+});
+
+$: coin_brackets = brackets?.find((b) => b.symbol == $coin)?.brackets || [];
+$: bracket = coin_brackets?.find((b) => b.minLeverage <= $leverage && $leverage <= b.maxLeverage);
+$: {
+  if ($leverage > coin_brackets[0]?.maxLeverage) $leverage = coin_brackets[0]?.maxLeverage;
+}
+
 let last;
 let liquidated_at;
-let min_buy = 1;
 let table = [];
 
 function round(num) {
@@ -178,12 +226,6 @@ $: {
   liquidated_at = last.avg_price * (1 - $balance / last.total_volume);
 }
 
-$: coin_brackets = brackets?.find((b) => b.symbol == $coin)?.brackets || [];
-$: bracket = coin_brackets?.find((b) => b.minLeverage <= $leverage && $leverage <= b.maxLeverage);
-$: {
-  if ($leverage > coin_brackets[0]?.maxLeverage) $leverage = coin_brackets[0]?.maxLeverage;
-}
-
 let last_coin = '';
 $: {
   if ($coin != last_coin) {
@@ -191,25 +233,6 @@ $: {
     entry_price = prices?.find((c) => c.symbol == $coin)?.price || 1;
   }
 }
-
-cached('3c.brackets-cache', 24 * 60 * 60, () => {
-  return fetch(`https://cors.bridged.cc/https://www.binance.com/bapi/futures/v1/friendly/future/common/brackets`, {
-    headers: {
-      'content-type': 'application/json'
-    },
-    body: '{}',
-    method: 'POST'
-  }).then((r) => r.json());
-}).then((b) => {
-  brackets = b.data.brackets.map((b) => ({
-    symbol: b.symbol,
-    brackets: b.riskBrackets.map((rb) => ({
-      volume_cap: rb.bracketNotionalCap,
-      minLeverage: rb.minOpenPosLeverage,
-      maxLeverage: rb.maxOpenPosLeverage
-    }))
-  }));
-});
 
 let active_order;
 </script>
@@ -236,6 +259,7 @@ input[type='number'] {
   background: rgba(255, 0, 0, 0.4);
 }
 </style>
+
 
 <div class="grid grid-cols-3 gap-8">
   <div class="col-span-2 grid grid-cols-3 gap-6">
