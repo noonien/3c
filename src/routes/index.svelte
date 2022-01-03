@@ -4,7 +4,7 @@ export async function load({ fetch }) {
 
   return {
     props: {
-      prices: prices.filter((p) => p.symbol.endsWith('USDT'))
+      prices: prices.filter((p) => p.symbol.endsWith('USDT')).sort((a, b) => a.symbol.localeCompare(b.symbol))
     }
   };
 }
