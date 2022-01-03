@@ -2,5 +2,17 @@ input[type='text'],
 input[type='email'],
 input[type='password'],
 input[type='number'] {
-    @apply focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm bg-gray-900;
+    @apply focus:ring-indigo-500 focus:border-indigo-500 shadow-sm bg-gray-900;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button:not(.spinner),
+input::-webkit-inner-spin-button:not(.spinner) {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type='number']:not(.spinner) {
+    -moz-appearance: textfield;
 }
