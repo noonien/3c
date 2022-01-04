@@ -13,12 +13,18 @@ export function rules() {
             .then((body) => {
                 const doc = document.createElement('html');
                 doc.innerHTML = body;
-                const rows = doc.querySelectorAll('tr.rc-table-row'); //:nth-child(1) > td:nth-child(2)
-                return Array.from(rows).map((r) => {
-                    const [symbol, type] = r.children[0].innerText.split(' ');
-                    const [min_trade, coin] = r.children[1].innerText.split(' ');
-                    if (type != 'Perpetual') return;
-                    return { symbol, type, min_trade: +min_trade, coin };
+                const raw_data = doc.querySelectorAll('#__APP_DATA')[0].innerText;
+                const data = JSON.parse(raw_data);
+                const pairs = data.pageData.redux.products.usdtFuturesProducts;
+                return Array.from(pairs).map((r) => {
+                    if (r.contractType != 'PERPETUAL') return;
+                    if (r.status != 'TRADING') return;
+
+                    const symbol = r.pair;
+                    const coin = r.baseAsset;
+                    const rules = r.filters.reduce((acc, f) => (acc[f.filterType] = f, acc), {});
+
+                    return { symbol, coin, rules };
                 });
             });
     });

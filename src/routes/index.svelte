@@ -46,9 +46,9 @@ $: if ($coin != last_coin) {
   entry_price = prices?.find((c) => c.symbol == $coin)?.price || 1;
 }
 
-let rules;
-external.rules().then((r) => (rules = r));
-$: min_buy = rules?.find((r) => r.symbol == $coin)?.min_trade || 1;
+let all_rules;
+external.rules().then((r) => (all_rules = r));
+$: rules = all_rules?.find((r) => r.symbol == $coin)?.rules;
 
 let brackets;
 external.brackets().then((b) => (brackets = b));
@@ -70,7 +70,7 @@ $: order_errors = (order) => {
   return errors;
 };
 
-$: table = compute(+$balance, +entry_price, min_buy, $base_order, $safety_order, +$take_profit, +$leverage, $long).map((o) => ({
+$: table = compute(+$balance, +entry_price, rules, $base_order, $safety_order, +$take_profit, +$leverage, $long).map((o) => ({
   ...o,
   errors: order_errors(o)
 }));

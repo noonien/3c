@@ -1,11 +1,12 @@
-function calc_size_vol(volume, price, min_buy) {
-    let raw_size = volume / price;
-    let size = Math.ceil(raw_size / min_buy) * min_buy;
+function calc_size_vol(volume, price, step_size, min_buy) {
+    const raw_size = volume / price;
+    let size = Math.ceil(raw_size / step_size) * step_size;
+    size = Math.max(min_buy, size);
     volume *= size / raw_size;
     return [size, volume];
 }
 
-export function compute(balance, entry_price, min_buy, base_order, safety_order, take_profit, leverage, long) {
+export function compute(balance, entry_price, rules, base_order, safety_order, take_profit, leverage, long) {
     let bo_vol = base_order.value;
     if (base_order.type == '%') {
         bo_vol = (balance * base_order.value) / 100;
@@ -18,9 +19,12 @@ export function compute(balance, entry_price, min_buy, base_order, safety_order,
 
     let table = [];
 
+    const step_size = +rules?.LOT_SIZE?.stepSize || 1e-6;
+    const min_buy = +rules?.LOT_SIZE?.minQty || 1e-6;
+
     let price_dev = 0;
     let avg_price = entry_price;
-    let [total_size, total_volume] = calc_size_vol(bo_vol, entry_price, min_buy);
+    let [total_size, total_volume] = calc_size_vol(bo_vol, entry_price, step_size, min_buy);
     table.push({
         order: 'BO',
         price_dev: 0,
@@ -42,7 +46,7 @@ export function compute(balance, entry_price, min_buy, base_order, safety_order,
         price_dev = price_dev * safety_order.step_scale - safety_order.price_dev;
         const price = entry_price * (1 + price_dev / 100);
         const raw_volume = so_vol * Math.pow(safety_order.volume_scale, i);
-        const [size, volume] = calc_size_vol(raw_volume, price, min_buy);
+        const [size, volume] = calc_size_vol(raw_volume, price, step_size, min_buy);
         const margin = volume / leverage;
         total_volume += volume;
         total_size += size;
