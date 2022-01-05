@@ -80,6 +80,7 @@ $: liquidated_at = last.avg_price * (1 - $balance / last.total_volume);
 $: max_req_change = table.reduce((max, order) => Math.max(order.req_change, max), $take_profit);
 
 function round(num) {
+  num ||= 0;
   return num.toLocaleString(undefined, {
     maximumSignificantDigits: 5
   });
